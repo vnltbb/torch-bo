@@ -1,0 +1,56 @@
+# ===============================================================
+# 통합 실험 설정 (config.yaml)
+# ===============================================================
+
+# 1. 기본 정보
+project_name: "bo-cv-pytorch-project"
+experiment_name: "EfficientNetv2l_run_01" # 실험별로 변경 (예: ResNet50_run_01)
+backbone: "efficientnetv2l" # modellib에서 지원하는 이름 사용
+seed: 42
+data_dir: "/path/to/your/dataset" # 데이터셋 경로를 지정하세요.
+test_dir: null # 별도 테스트셋이 있으면 경로 지정, 없으면 null
+
+# 2. 데이터 분할 설정
+split_config:
+  test_ratio: 0.1 # test_dir가 null일 경우, 전체 데이터에서 분리할 테스트셋 비율
+  val_ratio: 0.2 # HPO가 아닌 단일 학습/검증 시 사용할 검증셋 비율
+  n_splits_cv: 5 # HPO 시 사용할 K-Fold 교차 검증 폴드 수
+
+# 3. 하이퍼파라미터 최적화 (HPO) 설정
+hpo:
+  enabled: true # HPO 실행 여부
+  n_trials: 30 # 총 시도 횟수
+  max_epochs_per_trial: 25 # 각 Trial 당 최대 학습 에폭 (Pruning을 위해 충분히 길게)
+  metric_to_optimize: "val_loss" # 최적화 목표 지표 ('val_loss' 또는 'macro_f1')
+  pruner: "HyperbandPruner" # "MedianPruner", "HyperbandPruner" 등
+
+# 4. 하이퍼파라미터 탐색 공간 (Search Space for HPO)
+search_space:
+  lr:
+    type: "float"
+    low: 1.0e-5
+    high: 3.0e-3
+    log: true
+  weight_decay:
+    type: "float"
+    low: 1.0e-6
+    high: 1.0e-3
+    log: true
+  dropout_rate:
+    type: "float"
+    low: 0.0
+    high: 0.5
+  batch_size:
+    type: "categorical"
+    choices: [16, 32, 48]
+  optimizer:
+    type: "categorical"
+    choices: ["Adam", "AdamW"]
+
+# 5. 결과 저장 경로 서브디렉토리 이름
+results_subdirs:
+  hpo: "hpo_study"
+  models: "models"
+  metrics: "metrics_and_curves"
+  gradcam: "gradcam"
+  logs: "logs"
